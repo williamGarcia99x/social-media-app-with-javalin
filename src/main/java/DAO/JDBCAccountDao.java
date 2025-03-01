@@ -23,7 +23,7 @@ public class JDBCAccountDao implements AccountDao{
             ps.setString(1, newAccount.getUsername());
             ps.setString(2, newAccount.getPassword());
 
-             ps.executeUpdate();
+            ps.executeUpdate();
             
             
             ResultSet pkeyResultSet = ps.getGeneratedKeys();
@@ -32,8 +32,7 @@ public class JDBCAccountDao implements AccountDao{
                 return Optional.of(new Account(generatedAccountId, newAccount.getUsername(), newAccount.getPassword()));
             }
         } catch (SQLException e) {
-            //Just print the exception to the console
-            e.printStackTrace();
+            
             if(e.getSQLState().equals("23000")){
                 //Should happen in the case the account attempting to insert already exists.
                 return Optional.empty();
@@ -61,8 +60,7 @@ public class JDBCAccountDao implements AccountDao{
             }
             
         } catch (SQLException e) {
-            //Just print the exception to the console
-            e.printStackTrace();
+            //data access error
             throw new RuntimeException(e);
 
         }
@@ -84,8 +82,7 @@ public class JDBCAccountDao implements AccountDao{
             }
             
         } catch (SQLException e) {
-            //just print the exception to the console
-            e.printStackTrace();
+            //data access error
             throw new RuntimeException(e);
         }
         //In the case the account was not found
@@ -93,12 +90,7 @@ public class JDBCAccountDao implements AccountDao{
        
     }
 
-    Account mapRowToAccount(ResultSet rs) throws SQLException{
-        int account_id = rs.getInt("account_id");
-        String username = rs.getString("username");
-        String password = rs.getString("password");
-        return new Account(account_id, username, password);
-    }
+    
 
     @Override
     public Optional<Account> getAccountByUsername(String username) {
@@ -119,6 +111,13 @@ public class JDBCAccountDao implements AccountDao{
         }
         //In the case the account was not found
         return Optional.empty();
+    }
+
+    Account mapRowToAccount(ResultSet rs) throws SQLException{
+        int account_id = rs.getInt("account_id");
+        String username = rs.getString("username");
+        String password = rs.getString("password");
+        return new Account(account_id, username, password);
     }
     
 }
