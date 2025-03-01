@@ -45,7 +45,7 @@ public class JDBCAccountDao implements AccountDao{
         return Optional.empty();
        
     }
-
+    
     @Override
     public Optional<Account> verifyLoginInformation(String username, String password) {
       
@@ -63,6 +63,7 @@ public class JDBCAccountDao implements AccountDao{
         } catch (SQLException e) {
             //Just print the exception to the console
             e.printStackTrace();
+            throw new RuntimeException(e);
 
         }
         //In the case the account was not found
@@ -85,6 +86,7 @@ public class JDBCAccountDao implements AccountDao{
         } catch (SQLException e) {
             //just print the exception to the console
             e.printStackTrace();
+            throw new RuntimeException(e);
         }
         //In the case the account was not found
         return Optional.empty();

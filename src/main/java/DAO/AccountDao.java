@@ -13,7 +13,7 @@ public interface AccountDao {
 
 
     /*
-     * Searches database for a user with the given credentials
+     * Searches database for a user with the given credentials. Returns an empty Optional object if the user is not found. In the case of an error with the data source, throws a runtime exception
      */
     Optional<Account> verifyLoginInformation(String username, String password);
 

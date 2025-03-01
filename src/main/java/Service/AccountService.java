@@ -39,5 +39,23 @@ public class AccountService {
     }
 
 
+    public Optional<Account> authenticateUser(Account accountToAuthenticate){
+
+         //Validate accountToAuthenticate information before calling the verifyLoginInfo DAO method
+         boolean isUsernameValid = accountToAuthenticate.getUsername().length() > 0;
+         boolean isPasswordValid = accountToAuthenticate.getPassword().length() >= 4;
+
+         //Validate the given credentials first to avoid accessing the data source when they are invalid
+         if(!isUsernameValid || !isPasswordValid){
+            return Optional.empty();
+         }
+
+        
+        return accountDao.verifyLoginInformation(accountToAuthenticate.getUsername(), accountToAuthenticate.getPassword());
+
+
+    }
+
+
 
 }
