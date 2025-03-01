@@ -1,14 +1,10 @@
 package Controller;
 
-import java.lang.StackWalker.Option;
-import java.nio.file.FileAlreadyExistsException;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import DAO.JDBCAccountDao;
 import Model.Account;
 import Model.Message;
 import Service.AccountService;
@@ -47,6 +43,11 @@ public class SocialMediaController {
 
         app.get("messages", this::getMessages);
         app.get("messages/{message_id}", this::getMessageById);
+        app.get("accounts/{account_id}/messages", this::getAllMessagesFromUser);
+        app.post("messages", this::uploadNewMessage);
+        app.patch("messages/{message_id}", this::updateMessage);
+        app.delete("messages/{message_id}", this::deleteMessageById);
+
 
         app.exception(JsonProcessingException.class, this::jsonProcessingExceptionHandler);
         return app;
@@ -64,6 +65,7 @@ public class SocialMediaController {
     private void registerUser(Context ctx) throws JsonProcessingException {
 
         ObjectMapper mapper = new ObjectMapper();
+        //In the case of a JsonProcessingException, throw it out and the appropriate controller handler will catch it
         Account newAccount = mapper.readValue(ctx.body(), Account.class);
         try {
             Optional<Account> createdAccount = accountService.createAccount(newAccount);
@@ -84,6 +86,7 @@ public class SocialMediaController {
     private void loginUser(Context ctx) throws JsonProcessingException{
         
         ObjectMapper mapper = new ObjectMapper();
+        //In the case of a JsonProcessingException, throw it out and the appropriate controller handler will catch it
         Account accountToAuthenticate = mapper.readValue(ctx.body(), Account.class);
         try{
             Optional<Account> foundAccount = accountService.authenticateUser(accountToAuthenticate);
@@ -126,11 +129,75 @@ public class SocialMediaController {
             
         }
 
+    }
 
+    private void uploadNewMessage(Context ctx) throws JsonProcessingException{
+
+        ObjectMapper mapper = new ObjectMapper();
+        //In the case of a JsonProcessingException, throw it out and the appropriate controller handler will catch it
+        Message message = mapper.readValue(ctx.body(), Message.class);
+        try{
+            Optional<Message> createdMessage = messageService.uploadNewMessage(message);
+            if(createdMessage.isPresent()){
+                ctx.json(createdMessage.get());
+            }
+            else {
+                //Message did not pass validation due to client error.
+                ctx.status(400);
+            }
+        }catch(RuntimeException e){
+            //An exception will only be thrown in the case that there is an issue in any of the underlying units not due to user error. 
+            ctx.status(500);
+
+        }
+        
+    }
+
+    private void deleteMessageById(Context ctx){
+
+        try{
+            int messageId = Integer.parseInt(ctx.pathParam("message_id"));
+            Optional<Message> messageDeleted = messageService.deleteMessageById(messageId);
+            //if the message was deleted, return the JSON representation of the message. Otherwise, return an empty string
+            ctx.json(messageDeleted.isPresent() ? messageDeleted.get() : "");
+        }catch(RuntimeException e){
+            //server error occurred
+            ctx.status(500);
+        }
 
     }
 
+    private void updateMessage(Context ctx) throws JsonProcessingException{
+        ObjectMapper mapper = new ObjectMapper();
+        //In the case of a JsonProcessingException, throw it out and the appropriate controller handler will catch it
+        
+        Message message = mapper.readValue(ctx.body(), Message.class);
+        try{
+            int messageId = Integer.parseInt(ctx.pathParam("message_id"));
+            Optional<Message> messageUpdated = messageService.updateMessageById(messageId, message.getMessage_text());
+            //if the message was deleted, return the JSON representation of the message. Otherwise, return an empty string
+            if(messageUpdated.isPresent()){
+                ctx.json(messageUpdated.get());
+            }
+            else ctx.status(400);
+        }catch(RuntimeException e){
+            //else server error occurred
+            ctx.status(500);
+        }
 
+    }
+
+   
+
+    public void getAllMessagesFromUser(Context ctx){
+        try{
+            int accountId = Integer.parseInt(ctx.pathParam("account_id"));
+            ctx.json(messageService.getAllMessagesFromUser(accountId));   
+        }catch(RuntimeException e){
+            //Server error occured
+            ctx.status(500);
+        }
+    }
 
 
     //Assume any JSON parsing errors are due to an object with the incorrect structure
@@ -138,11 +205,6 @@ public class SocialMediaController {
         ctx.status(400);
         ctx.result("Bad input");
     }
-
-
-
-
-    
 
 
 }

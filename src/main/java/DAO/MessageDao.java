@@ -14,7 +14,9 @@ public interface MessageDao {
 
     boolean deleteMessageById(int id);
 
-    boolean updateMessageById(int id);
+    boolean updateMessage(Message updatedMessage);
 
-    List<Message> getAllMessagesFromUser(int accountId);
+    List<Message> getAllMessagesByPostedById(int postedbyId);
+
+    Optional<Message> insertMessage(Message message);
 }
